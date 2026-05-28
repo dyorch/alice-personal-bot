@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { IsoDateTime } from './common.js';
+import { IsoDateTime } from './common';
 
 export const Reminder = z.object({
   id: z.number().int().positive(),

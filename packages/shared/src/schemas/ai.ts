@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { Currency, WatchlistKind } from './common.js';
+import { Currency, WatchlistKind } from './common';
 
 /**
  * Respuesta esperada del clasificador (Workers AI). El prompt obliga a JSON

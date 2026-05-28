@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { IsoDateTime, WatchlistKind } from './common.js';
+import { IsoDateTime, WatchlistKind } from './common';
 
 export const WatchlistItem = z.object({
   id: z.number().int().positive(),

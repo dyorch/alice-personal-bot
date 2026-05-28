@@ -7,7 +7,7 @@ import {
   MessageStatus,
   MessageType,
   PhoneE164,
-} from './common.js';
+} from './common';
 
 export const MessageLogEntry = z.object({
   id: z.number().int().positive(),

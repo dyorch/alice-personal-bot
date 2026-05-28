@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { Currency, IsoDateTime, LocalDateString } from './common.js';
+import { Currency, IsoDateTime, LocalDateString } from './common';
 
 /** Registro tal como vive en D1 (filas devueltas por la API). */
 export const Expense = z.object({
