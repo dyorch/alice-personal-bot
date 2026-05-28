@@ -1,9 +1,11 @@
 import { z } from 'zod';
 
-export const Currency = z.enum(['PEN', 'USD']);
+export const CURRENCIES = ['PEN', 'USD'] as const;
+export const Currency = z.enum(CURRENCIES);
 export type Currency = z.infer<typeof Currency>;
 
-export const WatchlistKind = z.enum(['movie', 'series', 'tiktok', 'video', 'other']);
+export const WATCHLIST_KINDS = ['movie', 'series', 'tiktok', 'video', 'other'] as const;
+export const WatchlistKind = z.enum(WATCHLIST_KINDS);
 export type WatchlistKind = z.infer<typeof WatchlistKind>;
 
 export const MessageDirection = z.enum(['in', 'out']);
