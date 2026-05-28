@@ -1,0 +1,51 @@
+# Dependencias
+node_modules/
+.pnpm-store/
+
+# Builds y caches
+.next/
+out/
+dist/
+build/
+.turbo/
+*.tsbuildinfo
+next-env.d.ts
+
+# Variables de entorno (el unico que se commitea es .env.example)
+.env
+.env.local
+.env*.local
+.dev.vars
+.dev.vars.*
+
+# Cloudflare / Wrangler (worker, fase posterior)
+.wrangler/
+.dev.vars
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Coverage y tests
+coverage/
+.vitest/
+playwright-report/
+test-results/
+
+# Sistema operativo / editores
+.DS_Store
+Thumbs.db
+.idea/
+*.swp
+.claude/
+
+# Deploy
+.vercel
+
+# Archivos generados por create-next-app / shadcn, no se versionan
+apps/web/AGENTS.md
+apps/web/CLAUDE.md
+apps/web/README.md

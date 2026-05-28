@@ -1,0 +1,19 @@
+{
+  "name": "alice",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@11.1.2",
+  "scripts": {
+    "dev": "concurrently -n worker,web -c blue,magenta \"pnpm dev:worker\" \"pnpm dev:web\"",
+    "dev:worker": "pnpm --filter @alice/worker dev",
+    "dev:web": "pnpm --filter web dev",
+    "build": "pnpm --filter web build",
+    "lint": "pnpm --filter web lint",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm --filter @alice/worker test",
+    "db:migrate:local": "pnpm --filter @alice/worker db:migrate:local"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}
