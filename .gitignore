@@ -44,3 +44,8 @@ Thumbs.db
 
 # Deploy
 .vercel
+
+# Archivos generados por create-next-app / shadcn, no se versionan
+apps/web/AGENTS.md
+apps/web/CLAUDE.md
+apps/web/README.md
