@@ -8,7 +8,7 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from '@/components/ui/chart';
-import type { DailyTotal } from '@/lib/mock-data';
+import type { DailyTotal } from '@/lib/data';
 
 const config = {
   total: { label: 'Gasto (S/)', color: 'var(--chart-1)' },

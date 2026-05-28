@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useState, useTransition, type FormEvent } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -16,15 +17,37 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { createWatchlist } from '@/lib/actions';
 import { KIND_LABEL } from '@/lib/watchlist-ui';
 import { WATCHLIST_KINDS } from '@/lib/types';
+import type { WatchlistKind } from '@/lib/types';
 
 export default function NuevoWatchlistPage() {
-  const [kind, setKind] = useState('movie');
+  const [kind, setKind] = useState<WatchlistKind>('movie');
+  const [pending, startTransition] = useTransition();
+  const router = useRouter();
 
   function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    toast.success('Añadido a la watchlist', { description: '(mockup, no persiste en base de datos)' });
+    const fd = new FormData(e.currentTarget);
+    const url = String(fd.get('url') ?? '').trim();
+    const notes = String(fd.get('notes') ?? '').trim();
+    const title = String(fd.get('title') ?? '').trim();
+    const input = {
+      kind,
+      ...(title ? { title } : {}),
+      ...(url ? { url } : {}),
+      ...(notes ? { notes } : {}),
+    };
+    startTransition(async () => {
+      try {
+        const created = await createWatchlist(input);
+        toast.success(`Anotado en la watchlist (#${created.id})`);
+        router.push('/watchlist');
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'Error al guardar');
+      }
+    });
   }
 
   return (
@@ -41,10 +64,10 @@ export default function NuevoWatchlistPage() {
           <form className="flex flex-col gap-4" onSubmit={onSubmit}>
             <div className="flex flex-col gap-2">
               <Label htmlFor="kind">Tipo</Label>
-              <Select value={kind} onValueChange={(v) => setKind(v ?? 'movie')}>
+              <Select value={kind} onValueChange={(v) => setKind(((v as WatchlistKind) ?? 'movie'))}>
                 <SelectTrigger id="kind" className="w-full">
                   <SelectValue>
-                    {(v) => (v ? KIND_LABEL[v as (typeof WATCHLIST_KINDS)[number]] : '')}
+                    {(v) => (v ? KIND_LABEL[v as WatchlistKind] : '')}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -58,21 +81,23 @@ export default function NuevoWatchlistPage() {
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="title">Título</Label>
-              <Input id="title" placeholder="Ej: Dune: Parte Dos" required />
+              <Input id="title" name="title" placeholder="Ej: Dune: Parte Dos" required />
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="url">Enlace (opcional)</Label>
-              <Input id="url" type="url" placeholder="https://…" />
+              <Input id="url" name="url" type="url" placeholder="https://…" />
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="notes">Notas (opcional)</Label>
-              <Input id="notes" placeholder="Ej: recomendada por Dani" />
+              <Input id="notes" name="notes" placeholder="Ej: recomendada por Dani" />
             </div>
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" render={<Link href="/watchlist" />}>
                 Cancelar
               </Button>
-              <Button type="submit">Guardar</Button>
+              <Button type="submit" disabled={pending}>
+                {pending ? 'Guardando…' : 'Guardar'}
+              </Button>
             </div>
           </form>
         </CardContent>

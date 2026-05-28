@@ -14,19 +14,23 @@ import {
   upcomingReminders,
   watchlistCountsByKind,
   watchlistPending,
-} from '@/lib/mock-data';
+} from '@/lib/data';
 import type { WatchlistKind } from '@/lib/types';
 
-export default function HomePage() {
-  const { totalsByCurrency, penNow, penDeltaPct } = monthSummary();
-  const top = topCategories(3);
-  const upcoming = upcomingReminders(7);
-  const counts = watchlistCountsByKind();
-  const pendingCount = watchlistPending().length;
-  const stats = messageLogStats();
+export default async function HomePage() {
+  const [{ totalsByCurrency, penNow, penDeltaPct }, top, upcoming, counts, pending, stats, dailyTotals] =
+    await Promise.all([
+      monthSummary(),
+      topCategories(3),
+      upcomingReminders(7),
+      watchlistCountsByKind(),
+      watchlistPending(),
+      messageLogStats(),
+      dailyTotalsCurrentMonth(),
+    ]);
   const usd = totalsByCurrency.find((t) => t.currency === 'USD');
-
   const deltaUp = penDeltaPct >= 0;
+  const pendingCount = pending.length;
 
   return (
     <>
@@ -53,14 +57,10 @@ export default function HomePage() {
             <span
               className={`inline-flex items-center gap-1 ${deltaUp ? 'text-destructive' : 'text-emerald-500'}`}
             >
-              {deltaUp ? (
-                <ArrowUpRight className="size-4" />
-              ) : (
-                <ArrowDownRight className="size-4" />
-              )}
+              {deltaUp ? <ArrowUpRight className="size-4" /> : <ArrowDownRight className="size-4" />}
               {Math.abs(penDeltaPct).toFixed(1)}% vs mes anterior
             </span>
-            {usd && (
+            {usd && usd.total > 0 && (
               <span className="text-muted-foreground">
                 + {formatMoney(usd.total, 'USD')} en dólares
               </span>
@@ -74,6 +74,7 @@ export default function HomePage() {
             <CardTitle className="text-base">Este mes</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-2 text-sm">
+            {top.length === 0 && <span className="text-muted-foreground">Sin gastos aún.</span>}
             {top.map((c, i) => (
               <div key={c.category} className="flex items-center justify-between">
                 <span className="flex items-center gap-2">
@@ -123,6 +124,7 @@ export default function HomePage() {
                   </Badge>
                 );
               })}
+            {pendingCount === 0 && <span className="text-muted-foreground">Lista vacía.</span>}
           </CardContent>
         </Card>
       </div>
@@ -133,7 +135,7 @@ export default function HomePage() {
           <CardDescription>Soles (PEN) · mes actual</CardDescription>
         </CardHeader>
         <CardContent>
-          <MonthlyBarChart data={dailyTotalsCurrentMonth()} />
+          <MonthlyBarChart data={dailyTotals} />
         </CardContent>
       </Card>
     </>

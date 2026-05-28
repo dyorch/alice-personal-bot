@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import { Check, ExternalLink, RotateCcw, Search } from 'lucide-react';
 import { toast } from 'sonner';
+
+import { updateWatchlist } from '@/lib/actions';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -96,23 +98,33 @@ export function WatchlistView({ items }: { items: WatchlistItem[] }) {
   const [list, setList] = useState(items);
   const [kind, setKind] = useState('all');
   const [search, setSearch] = useState('');
+  const [, startTransition] = useTransition();
 
   function toggle(item: WatchlistItem) {
+    const next = !item.watched;
     setList((prev) =>
       prev.map((x) =>
         x.id === item.id
-          ? { ...x, watched: !x.watched, watchedAt: x.watched ? null : new Date().toISOString() }
+          ? { ...x, watched: next, watchedAt: next ? new Date().toISOString() : null }
           : x,
       ),
     );
-    toast.success(item.watched ? 'Movido a pendientes' : 'Marcado como visto', {
-      description: '(mockup, no persiste)',
+    startTransition(async () => {
+      try {
+        await updateWatchlist(item.id, { watched: next });
+        toast.success(next ? 'Marcado como visto' : 'Movido a pendientes');
+      } catch (err) {
+        setList((prev) =>
+          prev.map((x) => (x.id === item.id ? item : x)),
+        );
+        toast.error(err instanceof Error ? err.message : 'No se pudo actualizar');
+      }
     });
   }
 
   const matches = (i: WatchlistItem) =>
     (kind === 'all' || i.kind === kind) &&
-    (!search || i.title.toLowerCase().includes(search.toLowerCase()));
+    (!search || (i.title ?? '').toLowerCase().includes(search.toLowerCase()));
 
   const pending = list.filter((i) => !i.watched && matches(i));
   const watched = list.filter((i) => i.watched && matches(i));

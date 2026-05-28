@@ -1,10 +1,12 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useTransition } from 'react';
 import { CalendarIcon, Download, Search, Trash2 } from 'lucide-react';
 import { es } from 'react-day-picker/locale';
 import type { DateRange } from 'react-day-picker';
 import { toast } from 'sonner';
+
+import { deleteExpense } from '@/lib/actions';
 
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -122,6 +124,7 @@ export function ExpensesTable({
   const [customRange, setCustomRange] = useState<DateRange | undefined>();
   const [dateOpen, setDateOpen] = useState(false);
   const [toDelete, setToDelete] = useState<Expense | null>(null);
+  const [, startTransition] = useTransition();
 
   const categories = useMemo(
     () => [...new Set(expenses.map((e) => e.category))].sort(),
@@ -177,9 +180,18 @@ export function ExpensesTable({
 
   function confirmDelete() {
     if (!toDelete) return;
-    setRows((prev) => prev.filter((e) => e.id !== toDelete.id));
-    toast.success(`Gasto #${toDelete.id} borrado`, { description: '(mockup, no persiste)' });
+    const item = toDelete;
     setToDelete(null);
+    setRows((prev) => prev.filter((e) => e.id !== item.id));
+    startTransition(async () => {
+      try {
+        await deleteExpense(item.id);
+        toast.success(`Gasto #${item.id} borrado`);
+      } catch (err) {
+        setRows((prev) => [...prev, item].sort((a, b) => b.id - a.id));
+        toast.error(err instanceof Error ? err.message : 'No se pudo borrar');
+      }
+    });
   }
 
   return (

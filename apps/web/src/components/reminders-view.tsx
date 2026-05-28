@@ -1,9 +1,11 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useTransition } from 'react';
 import { Bell, Check, X } from 'lucide-react';
 import { es } from 'react-day-picker/locale';
 import { toast } from 'sonner';
+
+import { deleteReminder } from '@/lib/actions';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -31,6 +33,7 @@ function dateKey(d: Date): string {
 
 export function RemindersView({ reminders, nowIso }: { reminders: Reminder[]; nowIso: string }) {
   const [list, setList] = useState(reminders);
+  const [, startTransition] = useTransition();
   const now = new Date(nowIso);
   const in24h = now.getTime() + 86_400_000;
   const today = limaDate(nowIso);
@@ -73,7 +76,15 @@ export function RemindersView({ reminders, nowIso }: { reminders: Reminder[]; no
 
   function cancel(r: Reminder) {
     setList((prev) => prev.filter((x) => x.id !== r.id));
-    toast.success(`Recordatorio #${r.id} cancelado`, { description: '(mockup, no persiste)' });
+    startTransition(async () => {
+      try {
+        await deleteReminder(r.id);
+        toast.success(`Recordatorio #${r.id} cancelado`);
+      } catch (err) {
+        setList((prev) => [...prev, r].sort((a, b) => a.fireAt.localeCompare(b.fireAt)));
+        toast.error(err instanceof Error ? err.message : 'No se pudo cancelar');
+      }
+    });
   }
 
   return (

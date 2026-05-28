@@ -8,15 +8,20 @@ import { CategoryPieChart } from '@/components/charts/category-pie-chart';
 import { MonthlyBarChart } from '@/components/charts/monthly-bar-chart';
 import { formatMoney } from '@/lib/format';
 import {
-  NOW,
   categoryTotals,
   dailyTotalsCurrentMonth,
-  expenses,
+  listAllExpenses,
   monthSummary,
-} from '@/lib/mock-data';
+  nowIso,
+} from '@/lib/data';
 
-export default function GastosPage() {
-  const { totalsByCurrency } = monthSummary();
+export default async function GastosPage() {
+  const [{ totalsByCurrency }, expenses, daily, byCategoryPen] = await Promise.all([
+    monthSummary(),
+    listAllExpenses(),
+    dailyTotalsCurrentMonth(),
+    categoryTotals('PEN'),
+  ]);
   const pen = totalsByCurrency.find((t) => t.currency === 'PEN');
   const usd = totalsByCurrency.find((t) => t.currency === 'USD');
 
@@ -53,7 +58,11 @@ export default function GastosPage() {
             <CardTitle className="text-base">Por categoría (S/)</CardTitle>
           </CardHeader>
           <CardContent>
-            <CategoryPieChart data={categoryTotals('PEN')} />
+            {byCategoryPen.length > 0 ? (
+              <CategoryPieChart data={byCategoryPen} />
+            ) : (
+              <p className="py-8 text-center text-sm text-muted-foreground">Sin gastos aún.</p>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -64,7 +73,7 @@ export default function GastosPage() {
           <CardDescription>Soles (PEN) · mes actual</CardDescription>
         </CardHeader>
         <CardContent>
-          <MonthlyBarChart data={dailyTotalsCurrentMonth()} />
+          <MonthlyBarChart data={daily} />
         </CardContent>
       </Card>
 
@@ -74,7 +83,7 @@ export default function GastosPage() {
           <CardDescription>Filtra, exporta o borra registros.</CardDescription>
         </CardHeader>
         <CardContent>
-          <ExpensesTable expenses={expenses} nowIso={NOW.toISOString()} />
+          <ExpensesTable expenses={expenses} nowIso={nowIso()} />
         </CardContent>
       </Card>
     </>

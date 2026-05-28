@@ -10,7 +10,7 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from '@/components/ui/chart';
-import type { CategoryTotal } from '@/lib/mock-data';
+import type { CategoryTotal } from '@/lib/data';
 
 const COLORS = [
   'var(--chart-1)',

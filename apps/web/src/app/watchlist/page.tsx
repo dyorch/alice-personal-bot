@@ -3,9 +3,10 @@ import { Plus } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { WatchlistView } from '@/components/watchlist-view';
-import { watchlist } from '@/lib/mock-data';
+import { listAllWatchlist } from '@/lib/data';
 
-export default function WatchlistPage() {
+export default async function WatchlistPage() {
+  const items = await listAllWatchlist();
   return (
     <>
       <div className="flex items-center justify-between gap-2">
@@ -16,7 +17,7 @@ export default function WatchlistPage() {
           <Plus /> Nuevo
         </Button>
       </div>
-      <WatchlistView items={watchlist} />
+      <WatchlistView items={items} />
     </>
   );
 }

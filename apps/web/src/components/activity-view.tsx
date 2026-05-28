@@ -30,8 +30,7 @@ import {
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import { formatDateTime } from '@/lib/format';
-import type { MessageLogEntry, MessageStatus } from '@/lib/types';
-import type { MessageLogStats } from '@/lib/mock-data';
+import type { MessageLogEntry, MessageLogStats, MessageStatus } from '@/lib/types';
 
 const STATUS_LABEL: Record<MessageStatus, string> = {
   allowed: 'Permitido',
