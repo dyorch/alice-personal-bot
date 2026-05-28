@@ -1,0 +1,35 @@
+name = "alice-bot"
+main = "src/index.ts"
+compatibility_date = "2026-05-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Para local dev no hace falta tocar `database_id` ni `id` de KV. Wrangler
+# crea un D1 SQLite y un KV emulado bajo `.wrangler/state/`. Antes del primer
+# `wrangler deploy` reemplaza los placeholders con los reales (`wrangler d1 create`
+# y `wrangler kv:namespace create`).
+
+[[d1_databases]]
+binding = "DB"
+database_name = "alice-db"
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"
+
+[ai]
+binding = "AI"
+
+[[kv_namespaces]]
+binding = "RATE_LIMIT"
+id = "00000000000000000000000000000000"
+
+[triggers]
+crons = ["* * * * *"]
+
+[vars]
+USER_TZ = "America/Lima"
+DEFAULT_CURRENCY = "PEN"
+MESSAGE_LOG_RETENTION_DAYS = "180"
+
+# Ruta de produccion (descomentar despues de tener dyorch.com en Cloudflare):
+# [[routes]]
+# pattern = "bot.alice.dyorch.com/*"
+# zone_name = "dyorch.com"

@@ -1,0 +1,31 @@
+{
+  "name": "@alice/worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "cf-typegen": "wrangler types",
+    "db:migrate:local": "wrangler d1 migrations apply alice-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply alice-db --remote",
+    "db:reset:local": "wrangler d1 execute alice-db --local --file=migrations/_drop.sql"
+  },
+  "dependencies": {
+    "@alice/shared": "workspace:*",
+    "hono": "^4.6.0",
+    "kysely": "^0.27.0",
+    "kysely-d1": "^0.3.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.5.0",
+    "@cloudflare/workers-types": "^4.20240924.0",
+    "typescript": "^5",
+    "vitest": "^2.1.0",
+    "wrangler": "^4.0.0"
+  }
+}
