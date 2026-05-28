@@ -1,0 +1,43 @@
+/** Cadenas en espanol que el bot responde al usuario. Centralizadas (spec §12.1). */
+
+export const COPY = {
+  help: [
+    '🤖 *Alice* — comandos disponibles',
+    '',
+    '*Gastos*',
+    '/gasto 50 cafe desayuno',
+    '/gasto 30 usd transporte uber',
+    '/gastos hoy | semana | mes',
+    '/gastos borrar <id>',
+    '',
+    '*Recordatorios*',
+    '/recordar 2026-06-01 09:00 pagar luz',
+    '/recordatorios',
+    '/recordar borrar <id>',
+    '',
+    '*Watchlist*',
+    '/ver pelicula Dune Parte Dos',
+    '/ver lista',
+    '/ver visto <id>',
+    '/ver borrar <id>',
+    '',
+    '🔗 Tambien puedes mandar un enlace pelado y lo anoto.',
+  ].join('\n'),
+  unknown: '🤔 No te entendi. Escribe /ayuda para ver los comandos.',
+  unsupportedType: '📎 Por ahora solo proceso texto. Escribe /ayuda.',
+  expenseDeleted: (id: number) => `🗑️ Gasto #${id} borrado.`,
+  expenseNotFound: (id: number) => `❌ No encontre el gasto #${id}.`,
+  reminderDeleted: (id: number) => `🗑️ Recordatorio #${id} cancelado.`,
+  reminderNotFound: (id: number) => `❌ No encontre el recordatorio #${id}.`,
+  watchDeleted: (id: number) => `🗑️ Entrada #${id} borrada.`,
+  watchMarked: (id: number) => `✅ Marcada como vista (#${id}).`,
+  watchNotFound: (id: number) => `❌ No encontre la entrada #${id}.`,
+} as const;
+
+export const KIND_LABEL: Record<string, string> = {
+  movie: '🎬 Pelicula',
+  series: '📺 Serie',
+  tiktok: '🎵 TikTok',
+  video: '▶️ Video',
+  other: '🔗 Enlace',
+};

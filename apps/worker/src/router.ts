@@ -11,7 +11,7 @@ export type Intent =
       kind: 'expense_create';
       data: { amount: number; currency: Currency; category: string; description: string };
     }
-  | { kind: 'expense_query'; period: 'today' | 'week' | 'month' }
+  | { kind: 'expense_query'; period: 'day' | 'week' | 'month' }
   | { kind: 'expense_delete'; id: number }
   | { kind: 'reminder_create'; fireAtLocal: string; text: string }
   | { kind: 'reminder_list' }

@@ -1,15 +1,17 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 
+import expensesApi from './api/expenses.js';
+import messageLogApi from './api/message-log.js';
+import remindersApi from './api/reminders.js';
+import watchlistApi from './api/watchlist.js';
+import { runCron } from './cron/index.js';
 import { createRepos } from './db/index.js';
 import type { Env } from './env.js';
 import { AppError } from './errors.js';
+import { processAllowedMessage } from './modules/handler.js';
 import { fail, ok } from './utils/response.js';
-import {
-  handleWebhookHandshake,
-  handleWebhookPost,
-  type ProcessAllowedMessage,
-} from './webhook/handler.js';
+import { handleWebhookHandshake, handleWebhookPost } from './webhook/handler.js';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -37,29 +39,7 @@ app.get('/api/health', (c) =>
   c.json(ok({ status: 'ok', now: new Date().toISOString() })),
 );
 
-// ---------------------------------------------------------------------------
-// Webhook WhatsApp
-// ---------------------------------------------------------------------------
-
-/**
- * Procesador stub: por ahora solo deja huella en `message_log` con
- * `status='allowed'`. La tarea 11 (router) lo reemplaza por la pieza que
- * clasifica intent, ejecuta el modulo y envia la respuesta.
- */
-const stubProcessMessage: ProcessAllowedMessage = async (_env, repos, msg) => {
-  await repos.messages.log({
-    direction: 'in',
-    senderPhone: msg.from,
-    senderName: msg.senderName,
-    waMessageId: msg.waId,
-    body: msg.body,
-    messageType: msg.messageType,
-    intent: 'unknown',
-    status: 'allowed',
-    rejectionReason: null,
-    rawPayload: msg.rawPayload.slice(0, 4000),
-  });
-};
+// Webhook WhatsApp ---------------------------------------------------------
 
 app.get('/webhook', (c) => {
   const url = new URL(c.req.url);
@@ -70,15 +50,18 @@ app.post('/webhook', async (c) => {
   const rawBody = await c.req.raw.clone().text();
   const sig = c.req.header('x-hub-signature-256') ?? null;
   const repos = createRepos(c.env.DB);
-  return handleWebhookPost(c.env, repos, rawBody, sig, stubProcessMessage);
+  return handleWebhookPost(c.env, repos, rawBody, sig, processAllowedMessage);
 });
 
-// API routes — tarea 13
-// app.route('/api/expenses', expenseRoutes);
+// API REST (auth Bearer via API_SHARED_TOKEN aplicado en cada sub-router)
+app.route('/api/expenses', expensesApi);
+app.route('/api/reminders', remindersApi);
+app.route('/api/watchlist', watchlistApi);
+app.route('/api/message-log', messageLogApi);
 
 export default {
   fetch: app.fetch,
-  async scheduled(_event: ScheduledController, _env: Env, _ctx: ExecutionContext) {
-    // Cron — tarea 12 (recordatorios + purga de message_log).
+  async scheduled(_event: ScheduledController, env: Env, ctx: ExecutionContext) {
+    await runCron(env, ctx);
   },
 } satisfies ExportedHandler<Env>;

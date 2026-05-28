@@ -50,7 +50,7 @@ function build(amt: string, currency: Currency, category: string, desc?: string)
 }
 
 export type ExpensesQuery =
-  | { kind: 'list'; period: 'today' | 'week' | 'month' }
+  | { kind: 'list'; period: 'day' | 'week' | 'month' }
   | { kind: 'delete'; id: number };
 
 /** Parsea `/gastos`, `/gastos hoy|semana|mes`, `/gastos borrar <id>`. */
@@ -58,7 +58,7 @@ export function parseExpensesQuery(text: string): ExpensesQuery | null {
   const m = text.trim().match(/^\/gastos\s*(.*)$/i);
   if (!m) return null;
   const rest = m[1]!.trim().toLowerCase();
-  if (!rest || rest === 'hoy') return { kind: 'list', period: 'today' };
+  if (!rest || rest === 'hoy') return { kind: 'list', period: 'day' };
   if (rest === 'semana') return { kind: 'list', period: 'week' };
   if (rest === 'mes') return { kind: 'list', period: 'month' };
   const del = rest.match(/^borrar\s+(\d+)$/);
