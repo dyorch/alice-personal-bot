@@ -1,0 +1,11 @@
+# Copialo a apps/worker/.dev.vars (ya esta en .gitignore) y rellena los valores
+# reales cuando vayas configurando Meta + Cloudflare. Para dev local puedes
+# dejar placeholders.
+
+WHATSAPP_TOKEN=placeholder_meta_access_token
+WHATSAPP_PHONE_ID=000000000000000
+WHATSAPP_VERIFY_TOKEN=local_verify_token_change_me
+WHATSAPP_APP_SECRET=local_app_secret_change_me
+ALLOWED_PHONE=51987654321
+API_SHARED_TOKEN=local_shared_token_change_me_min_16_chars
+SECURITY_ALERT_WEBHOOK=

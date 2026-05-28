@@ -11,12 +11,13 @@ build/
 *.tsbuildinfo
 next-env.d.ts
 
-# Variables de entorno (el unico que se commitea es .env.example)
+# Variables de entorno (solo .env.example y .dev.vars.example se commitean)
 .env
 .env.local
 .env*.local
 .dev.vars
 .dev.vars.*
+!.dev.vars.example
 
 # Cloudflare / Wrangler (worker, fase posterior)
 .wrangler/
