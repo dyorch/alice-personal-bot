@@ -11,7 +11,7 @@ compatibility_flags = ["nodejs_compat"]
 [[d1_databases]]
 binding = "DB"
 database_name = "alice-db"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "647f8ec5-3418-488c-a07f-e2684a4bf72a"
 migrations_dir = "migrations"
 
 [ai]
@@ -19,7 +19,7 @@ binding = "AI"
 
 [[kv_namespaces]]
 binding = "RATE_LIMIT"
-id = "00000000000000000000000000000000"
+id = "ec3e00faa352487eaada3e91699ebabb"
 
 [triggers]
 crons = ["* * * * *"]
@@ -29,7 +29,6 @@ USER_TZ = "America/Lima"
 DEFAULT_CURRENCY = "PEN"
 MESSAGE_LOG_RETENTION_DAYS = "180"
 
-# Ruta de produccion (descomentar despues de tener dyorch.com en Cloudflare):
-# [[routes]]
-# pattern = "bot.alice.dyorch.com/*"
-# zone_name = "dyorch.com"
+[[routes]]
+pattern = "bot.alice.dyorch.com"
+custom_domain = true
