@@ -3,8 +3,9 @@
 import { useState, useTransition } from 'react';
 import { Check, ExternalLink, RotateCcw, Search } from 'lucide-react';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 
-import { updateWatchlist } from '@/lib/actions';
+import { api, queryKeys } from '@/lib/api-client';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -99,6 +100,7 @@ export function WatchlistView({ items }: { items: WatchlistItem[] }) {
   const [kind, setKind] = useState('all');
   const [search, setSearch] = useState('');
   const [, startTransition] = useTransition();
+  const queryClient = useQueryClient();
 
   function toggle(item: WatchlistItem) {
     const next = !item.watched;
@@ -111,7 +113,8 @@ export function WatchlistView({ items }: { items: WatchlistItem[] }) {
     );
     startTransition(async () => {
       try {
-        await updateWatchlist(item.id, { watched: next });
+        await api.watchlist.update(item.id, { watched: next });
+        await queryClient.invalidateQueries({ queryKey: queryKeys.watchlist.all });
         toast.success(next ? 'Marcado como visto' : 'Movido a pendientes');
       } catch (err) {
         setList((prev) =>

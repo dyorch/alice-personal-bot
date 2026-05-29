@@ -5,8 +5,9 @@ import { CalendarIcon, Download, Search, Trash2 } from 'lucide-react';
 import { es } from 'react-day-picker/locale';
 import type { DateRange } from 'react-day-picker';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 
-import { deleteExpense } from '@/lib/actions';
+import { api, queryKeys } from '@/lib/api-client';
 
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -125,6 +126,7 @@ export function ExpensesTable({
   const [dateOpen, setDateOpen] = useState(false);
   const [toDelete, setToDelete] = useState<Expense | null>(null);
   const [, startTransition] = useTransition();
+  const queryClient = useQueryClient();
 
   const categories = useMemo(
     () => [...new Set(expenses.map((e) => e.category))].sort(),
@@ -185,7 +187,8 @@ export function ExpensesTable({
     setRows((prev) => prev.filter((e) => e.id !== item.id));
     startTransition(async () => {
       try {
-        await deleteExpense(item.id);
+        await api.expenses.remove(item.id);
+        await queryClient.invalidateQueries({ queryKey: queryKeys.expenses.all });
         toast.success(`Gasto #${item.id} borrado`);
       } catch (err) {
         setRows((prev) => [...prev, item].sort((a, b) => b.id - a.id));

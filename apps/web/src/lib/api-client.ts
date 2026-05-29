@@ -1,5 +1,3 @@
-import 'server-only';
-
 import type {
   CreateExpenseInput,
   CreateReminderInput,
@@ -21,8 +19,8 @@ import type {
   WatchlistQuery,
 } from '@alice/shared';
 
-const BASE = process.env.WORKER_API_BASE ?? 'http://localhost:8787';
-const TOKEN = process.env.API_SHARED_TOKEN ?? '';
+const BASE = (import.meta.env.VITE_WORKER_API_BASE as string | undefined) ?? 'http://localhost:8787';
+const TOKEN = (import.meta.env.VITE_API_SHARED_TOKEN as string | undefined) ?? '';
 
 interface ApiOk<T> {
   ok: true;
@@ -38,7 +36,7 @@ interface ApiErr {
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   if (!TOKEN) {
     throw new Error(
-      'API_SHARED_TOKEN no esta definido. Copia .env.local.example a .env.local y completalo.',
+      'VITE_API_SHARED_TOKEN no está definido. Copia .env.example a .env.local y complétalo.',
     );
   }
   const res = await fetch(`${BASE}${path}`, {
@@ -48,7 +46,6 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
       ...init?.headers,
     },
-    cache: 'no-store',
   });
   const body = (await res.json().catch(() => null)) as ApiOk<T> | ApiErr | null;
   if (!body) {
@@ -113,5 +110,28 @@ export const api = {
       request<MessageLogEntry[]>(`/api/message-log${qs(q)}`),
     stats: () => request<MessageLogStats>('/api/message-log/stats'),
     get: (id: number) => request<MessageLogEntry>(`/api/message-log/${id}`),
+  },
+};
+
+// Query keys centralizados para invalidar/correlacionar caches con TanStack Query.
+export const queryKeys = {
+  expenses: {
+    all: ['expenses'] as const,
+    list: (q: Partial<ExpenseQuery> = {}) => ['expenses', 'list', q] as const,
+    summary: (period: ExpenseSummaryPeriod) => ['expenses', 'summary', period] as const,
+  },
+  reminders: {
+    all: ['reminders'] as const,
+    list: (q: Partial<ReminderQuery> = {}) => ['reminders', 'list', q] as const,
+  },
+  watchlist: {
+    all: ['watchlist'] as const,
+    list: (q: Partial<WatchlistQuery> = {}) => ['watchlist', 'list', q] as const,
+    counts: () => ['watchlist', 'counts'] as const,
+  },
+  messages: {
+    all: ['messages'] as const,
+    list: (q: Partial<MessageLogQuery> = {}) => ['messages', 'list', q] as const,
+    stats: () => ['messages', 'stats'] as const,
   },
 };

@@ -4,8 +4,9 @@ import { useMemo, useState, useTransition } from 'react';
 import { Bell, Check, X } from 'lucide-react';
 import { es } from 'react-day-picker/locale';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 
-import { deleteReminder } from '@/lib/actions';
+import { api, queryKeys } from '@/lib/api-client';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -34,6 +35,7 @@ function dateKey(d: Date): string {
 export function RemindersView({ reminders, nowIso }: { reminders: Reminder[]; nowIso: string }) {
   const [list, setList] = useState(reminders);
   const [, startTransition] = useTransition();
+  const queryClient = useQueryClient();
   const now = new Date(nowIso);
   const in24h = now.getTime() + 86_400_000;
   const today = limaDate(nowIso);
@@ -78,7 +80,8 @@ export function RemindersView({ reminders, nowIso }: { reminders: Reminder[]; no
     setList((prev) => prev.filter((x) => x.id !== r.id));
     startTransition(async () => {
       try {
-        await deleteReminder(r.id);
+        await api.reminders.remove(r.id);
+        await queryClient.invalidateQueries({ queryKey: queryKeys.reminders.all });
         toast.success(`Recordatorio #${r.id} cancelado`);
       } catch (err) {
         setList((prev) => [...prev, r].sort((a, b) => a.fireAt.localeCompare(b.fireAt)));

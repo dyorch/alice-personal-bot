@@ -1,8 +1,5 @@
-'use client';
-
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { useState } from 'react';
+import { Link, useRouterState } from '@tanstack/react-router';
 import {
   Activity,
   Bell,
@@ -28,11 +25,11 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { href: '/', label: 'Resumen', icon: LayoutDashboard },
-  { href: '/gastos', label: 'Gastos', icon: Wallet },
-  { href: '/recordatorios', label: 'Recordatorios', icon: Bell },
+  { href: '/expenses', label: 'Gastos', icon: Wallet },
+  { href: '/reminders', label: 'Recordatorios', icon: Bell },
   { href: '/watchlist', label: 'Watchlist', icon: Clapperboard },
-  { href: '/actividad', label: 'Actividad', icon: Activity },
-  { href: '/configuracion', label: 'Configuración', icon: Settings },
+  { href: '/activity', label: 'Actividad', icon: Activity },
+  { href: '/settings', label: 'Configuración', icon: Settings },
 ];
 
 function isActive(pathname: string, href: string): boolean {
@@ -48,7 +45,7 @@ function currentLabel(pathname: string): string {
 
 function Brand() {
   return (
-    <Link href="/" className="flex items-center gap-2 px-2 py-1">
+    <Link to="/" className="flex items-center gap-2 px-2 py-1">
       <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
         <Bot className="size-5" />
       </span>
@@ -58,7 +55,7 @@ function Brand() {
 }
 
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
-  const pathname = usePathname();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
     <nav className="flex flex-col gap-1 px-2">
       {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
@@ -66,7 +63,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
         return (
           <Link
             key={href}
-            href={href}
+            to={href}
             onClick={onNavigate}
             className={cn(
               'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
@@ -85,7 +82,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -99,7 +96,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <NavLinks />
         </div>
         <div className="border-t border-sidebar-border p-4 text-xs text-muted-foreground">
-          Mockup · datos de ejemplo
+          Datos reales · Worker en producción
         </div>
       </aside>
 
