@@ -1,5 +1,3 @@
-'use client';
-
 import { Bar, BarChart, CartesianGrid, XAxis } from 'recharts';
 
 import {
@@ -21,7 +19,7 @@ export function MonthlyBarChart({ data }: { data: DailyTotal[] }) {
         <CartesianGrid vertical={false} />
         <XAxis dataKey="day" tickLine={false} axisLine={false} tickMargin={8} interval={2} />
         <ChartTooltip
-          content={<ChartTooltipContent labelFormatter={(value) => `Día ${value}`} />}
+          content={<ChartTooltipContent labelFormatter={(value: any) => `Día ${value}`} />}
         />
         <Bar dataKey="total" fill="var(--color-total)" radius={[4, 4, 0, 0]} isAnimationActive={false} />
       </BarChart>
