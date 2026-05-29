@@ -23,7 +23,8 @@ not_found_handling = "single-page-application"
 # delegar el resto a los assets estáticos.
 run_worker_first = true
 
-# Custom domain — añadir después del primer deploy exitoso.
-# [[routes]]
-# pattern = "dashboard.alice.dyorch.com"
-# custom_domain = true
+# Custom domain. Solo se aplica si el dominio `alice.dyorch.com` está en
+# la misma cuenta de Cloudflare; Cloudflare crea el registro DNS solo.
+[[routes]]
+pattern = "dashboard.alice.dyorch.com"
+custom_domain = true
