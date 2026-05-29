@@ -1,0 +1,18 @@
+name = "alice-web"
+main = ".open-next/worker.js"
+compatibility_date = "2026-05-01"
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+
+[assets]
+binding = "ASSETS"
+directory = ".open-next/assets"
+
+# Variables publicas. Los secretos (API_SHARED_TOKEN, ALLOWED_PHONE) van via
+# `wrangler secret put` y no aparecen en este archivo.
+[vars]
+WORKER_API_BASE = "https://bot.alice.dyorch.com"
+
+# Custom domain del dashboard.
+[[routes]]
+pattern = "dashboard.alice.dyorch.com"
+custom_domain = true

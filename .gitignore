@@ -4,6 +4,7 @@ node_modules/
 
 # Builds y caches
 .next/
+.open-next/
 out/
 dist/
 build/
