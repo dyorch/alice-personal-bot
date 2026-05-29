@@ -1,17 +1,13 @@
 import { Link } from '@tanstack/react-router';
-import { useQuery } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RemindersView } from '@/components/reminders-view';
-import { api, queryKeys } from '@/lib/api-client';
+import { useRemindersList } from '@/hooks/use-reminders';
 
 export function RemindersPage() {
-  const remindersQuery = useQuery({
-    queryKey: queryKeys.reminders.list({ status: 'all', limit: 500 }),
-    queryFn: () => api.reminders.list({ status: 'all', limit: 500 }),
-  });
+  const remindersQuery = useRemindersList({ status: 'all', limit: 500 });
 
   return (
     <>

@@ -1,18 +1,10 @@
-import { useQuery } from '@tanstack/react-query';
-
 import { Skeleton } from '@/components/ui/skeleton';
 import { ActivityView } from '@/components/activity-view';
-import { api, queryKeys } from '@/lib/api-client';
+import { useMessagesList, useMessagesStats } from '@/hooks/use-messages';
 
 export function ActivityPage() {
-  const messagesQuery = useQuery({
-    queryKey: queryKeys.messages.list({ limit: 200 }),
-    queryFn: () => api.messages.list({ limit: 200 }),
-  });
-  const statsQuery = useQuery({
-    queryKey: queryKeys.messages.stats(),
-    queryFn: () => api.messages.stats(),
-  });
+  const messagesQuery = useMessagesList({ limit: 200 });
+  const statsQuery = useMessagesStats();
 
   if (!messagesQuery.data || !statsQuery.data) {
     return (

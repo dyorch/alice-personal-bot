@@ -1,54 +1,33 @@
-'use client';
-
-import { useMemo, useState, useTransition } from 'react';
+import { useMemo, useState } from 'react';
 import { Bell, Check, X } from 'lucide-react';
 import { es } from 'react-day-picker/locale';
-import { toast } from 'sonner';
-import { useQueryClient } from '@tanstack/react-query';
-
-import { api, queryKeys } from '@/lib/api-client';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { cn } from '@/lib/utils';
+import { useCancelReminder } from '@/hooks/use-reminders';
+import { dateKey, limaDate } from '@/lib/date-utils';
 import { formatDate, formatRelative, formatTime } from '@/lib/format';
 import type { Reminder } from '@/lib/types';
-
-function limaDate(iso: string): Date {
-  const [y, m, d] = new Date(iso)
-    .toLocaleDateString('en-CA', { timeZone: 'America/Lima' })
-    .split('-')
-    .map(Number);
-  return new Date(y!, m! - 1, d!);
-}
-
-function dateKey(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
+import { cn } from '@/lib/utils';
 
 export function RemindersView({ reminders, nowIso }: { reminders: Reminder[]; nowIso: string }) {
-  const [list, setList] = useState(reminders);
-  const [, startTransition] = useTransition();
-  const queryClient = useQueryClient();
+  const cancelReminder = useCancelReminder();
   const now = new Date(nowIso);
   const in24h = now.getTime() + 86_400_000;
   const today = limaDate(nowIso);
   const [selectedDate, setSelectedDate] = useState<Date>(today);
 
-  const pending = list
+  const pending = reminders
     .filter((r) => !r.sent)
     .sort((a, b) => a.fireAt.localeCompare(b.fireAt));
-  const sent = list.filter((r) => r.sent).sort((a, b) => b.fireAt.localeCompare(a.fireAt));
+  const sent = reminders.filter((r) => r.sent).sort((a, b) => b.fireAt.localeCompare(a.fireAt));
 
   const remindersByDay = useMemo(() => {
     const map = new Map<string, Reminder[]>();
-    for (const r of list) {
+    for (const r of reminders) {
       const key = dateKey(limaDate(r.fireAt));
       const existing = map.get(key);
       if (existing) existing.push(r);
@@ -56,7 +35,7 @@ export function RemindersView({ reminders, nowIso }: { reminders: Reminder[]; no
     }
     for (const arr of map.values()) arr.sort((a, b) => a.fireAt.localeCompare(b.fireAt));
     return map;
-  }, [list]);
+  }, [reminders]);
 
   const reminderDays = useMemo(
     () => [...remindersByDay.keys()].map((k) => {
@@ -76,19 +55,6 @@ export function RemindersView({ reminders, nowIso }: { reminders: Reminder[]; no
   const longDate = longDateRaw.charAt(0).toUpperCase() + longDateRaw.slice(1);
   const isToday = dateKey(selectedDate) === dateKey(today);
 
-  function cancel(r: Reminder) {
-    setList((prev) => prev.filter((x) => x.id !== r.id));
-    startTransition(async () => {
-      try {
-        await api.reminders.remove(r.id);
-        await queryClient.invalidateQueries({ queryKey: queryKeys.reminders.all });
-        toast.success(`Recordatorio #${r.id} cancelado`);
-      } catch (err) {
-        setList((prev) => [...prev, r].sort((a, b) => a.fireAt.localeCompare(b.fireAt)));
-        toast.error(err instanceof Error ? err.message : 'No se pudo cancelar');
-      }
-    });
-  }
 
   return (
     <Tabs defaultValue="list" className="flex-col gap-4">
@@ -140,7 +106,7 @@ export function RemindersView({ reminders, nowIso }: { reminders: Reminder[]; no
                     size="icon-sm"
                     aria-label="Cancelar"
                     className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
-                    onClick={() => cancel(r)}
+                    onClick={() => cancelReminder.mutate(r.id)}
                   >
                     <X className="text-muted-foreground" />
                   </Button>

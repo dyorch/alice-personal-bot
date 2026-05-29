@@ -1,31 +1,16 @@
 import { type FormEvent } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
-import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { api, queryKeys } from '@/lib/api-client';
-import type { CreateReminderInput } from '@alice/shared';
+import { useCreateReminder } from '@/hooks/use-reminders';
 
 export function NewReminderPage() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-
-  const create = useMutation({
-    mutationFn: (input: CreateReminderInput) => api.reminders.create(input),
-    onSuccess: async (created) => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.reminders.all });
-      toast.success(`Recordatorio #${created.id} creado`);
-      navigate({ to: '/reminders' });
-    },
-    onError: (err) => {
-      toast.error(err instanceof Error ? err.message : 'Error al crear');
-    },
-  });
+  const create = useCreateReminder();
 
   function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -39,7 +24,9 @@ export function NewReminderPage() {
     const [hh, mm] = time.split(':').map(Number);
     const local = new Date(y!, m! - 1, d!, hh!, mm!);
     const fireAt = local.toISOString();
-    create.mutate({ text, fireAt });
+    create.mutate({ text, fireAt }, {
+      onSuccess: () => navigate({ to: '/reminders' }),
+    });
   }
 
   return (

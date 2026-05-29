@@ -1,8 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
-import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,28 +13,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { api, queryKeys } from '@/lib/api-client';
+import { useCreateExpense } from '@/hooks/use-expenses';
+import { EXPENSE_CATEGORIES } from '@/lib/derived';
 import type { CreateExpenseInput } from '@alice/shared';
-
-const CATEGORIES = ['comida', 'transporte', 'super', 'ocio', 'salud', 'hogar', 'servicios', 'suscripciones'];
 
 export function NewExpensePage() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const [currency, setCurrency] = useState<'PEN' | 'USD'>('PEN');
-  const [category, setCategory] = useState('comida');
+  const [category, setCategory] = useState<string>(EXPENSE_CATEGORIES[0]);
 
-  const create = useMutation({
-    mutationFn: (input: CreateExpenseInput) => api.expenses.create(input),
-    onSuccess: async (created) => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.expenses.all });
-      toast.success(`Gasto #${created.id} registrado`);
-      navigate({ to: '/expenses' });
-    },
-    onError: (err) => {
-      toast.error(err instanceof Error ? err.message : 'Error al guardar');
-    },
-  });
+  const create = useCreateExpense();
 
   function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -49,7 +35,9 @@ export function NewExpensePage() {
       description: String(fd.get('description') ?? ''),
       spentAt: String(fd.get('spentAt') ?? ''),
     };
-    create.mutate(input);
+    create.mutate(input, {
+      onSuccess: () => navigate({ to: '/expenses' }),
+    });
   }
 
   return (
@@ -87,14 +75,14 @@ export function NewExpensePage() {
 
             <div className="flex flex-col gap-2">
               <Label htmlFor="category">Categoría</Label>
-              <Select value={category} onValueChange={(v) => setCategory(v ?? 'comida')}>
+              <Select value={category} onValueChange={(v) => setCategory(v ?? EXPENSE_CATEGORIES[0])}>
                 <SelectTrigger id="category" className="w-full">
                   <SelectValue>
                     {(v) => <span className="capitalize">{v}</span>}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  {CATEGORIES.map((c) => (
+                  {EXPENSE_CATEGORIES.map((c) => (
                     <SelectItem key={c} value={c} className="capitalize">
                       {c}
                     </SelectItem>

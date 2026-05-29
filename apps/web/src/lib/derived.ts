@@ -34,13 +34,6 @@ export interface MonthSummary {
   penDeltaPct: number;
 }
 
-export function previousMonthKey(yyyyMm: string): string {
-  const [y, m] = yyyyMm.split('-').map(Number);
-  const d = new Date(Date.UTC(y!, m! - 1, 1));
-  d.setUTCMonth(d.getUTCMonth() - 1);
-  return d.toISOString().slice(0, 7);
-}
-
 /** Deriva el resumen del mes con delta % vs mes anterior (solo PEN). */
 export function deriveMonthSummary(
   currentSummary: ExpenseSummary,

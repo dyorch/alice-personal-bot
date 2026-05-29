@@ -1,116 +1,57 @@
-'use client';
-
-import { useState, type FormEvent } from 'react';
-import { Plus, X } from 'lucide-react';
-import { toast } from 'sonner';
-
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { EXPENSE_CATEGORIES } from '@/lib/derived';
 import { formatDateTime } from '@/lib/format';
 
-const TIMEZONES = [
-  'America/Lima',
-  'America/Bogota',
-  'America/Mexico_City',
-  'America/Buenos_Aires',
-  'UTC',
-];
-
+/**
+ * Vista de configuración. ACTUALMENTE READ-ONLY: el backend no expone
+ * `/api/settings` aún, así que estas preferencias viven hardcoded en el
+ * código (EXPENSE_CATEGORIES en lib/derived.ts, TZ "America/Lima" en
+ * lib/format.ts). Cuando el endpoint exista, añadir:
+ *   - apps/web/src/services/settings.service.ts
+ *   - apps/web/src/hooks/use-settings.ts
+ *   - migrar este componente a editar vía mutation
+ */
 export function SettingsView({
-  initialCategories,
   botPhone,
   lastMessageIso,
 }: {
-  initialCategories: string[];
   botPhone: string;
   lastMessageIso: string;
 }) {
-  const [categories, setCategories] = useState(initialCategories);
-  const [draft, setDraft] = useState('');
-  const [tz, setTz] = useState('America/Lima');
-
-  function addCategory(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const value = draft.trim().toLowerCase();
-    if (!value || categories.includes(value)) return;
-    setCategories((prev) => [...prev, value]);
-    setDraft('');
-    toast.success(`Categoría "${value}" añadida`, { description: '(mockup, no persiste)' });
-  }
-
-  function removeCategory(c: string) {
-    setCategories((prev) => prev.filter((x) => x !== c));
-    toast.success(`Categoría "${c}" eliminada`, { description: '(mockup, no persiste)' });
-  }
-
   return (
     <>
       <Card>
         <CardHeader>
           <CardTitle>Categorías de gasto</CardTitle>
-          <CardDescription>Se usan al clasificar y filtrar gastos.</CardDescription>
+          <CardDescription>
+            Las categorías están definidas en código (
+            <code className="text-xs">lib/derived.ts</code>). Próximamente: configuración persistente.
+          </CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col gap-4">
+        <CardContent>
           <div className="flex flex-wrap gap-2">
-            {categories.map((c) => (
-              <Badge key={c} variant="secondary" className="gap-1 capitalize">
+            {EXPENSE_CATEGORIES.map((c) => (
+              <Badge key={c} variant="secondary" className="capitalize">
                 {c}
-                <button
-                  type="button"
-                  aria-label={`Quitar ${c}`}
-                  onClick={() => removeCategory(c)}
-                  className="ml-0.5 rounded-full text-muted-foreground hover:text-foreground"
-                >
-                  <X className="size-3" />
-                </button>
               </Badge>
             ))}
           </div>
-          <form className="flex gap-2" onSubmit={addCategory}>
-            <Input
-              placeholder="Nueva categoría…"
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              className="max-w-60"
-            />
-            <Button type="submit" variant="outline">
-              <Plus /> Añadir
-            </Button>
-          </form>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
           <CardTitle>Zona horaria</CardTitle>
-          <CardDescription>Define cómo se muestran e interpretan las fechas.</CardDescription>
+          <CardDescription>
+            Hardcodeada en <code className="text-xs">lib/format.ts</code>.
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="tz">Zona horaria del usuario</Label>
-            <Select value={tz} onValueChange={(v) => setTz(v ?? 'America/Lima')}>
-              <SelectTrigger id="tz" className="w-64">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {TIMEZONES.map((z) => (
-                  <SelectItem key={z} value={z}>
-                    {z}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <dl className="grid grid-cols-[10rem_1fr] gap-y-2 text-sm">
+            <dt className="text-muted-foreground">Zona horaria del bot</dt>
+            <dd>America/Lima</dd>
+          </dl>
         </CardContent>
       </Card>
 

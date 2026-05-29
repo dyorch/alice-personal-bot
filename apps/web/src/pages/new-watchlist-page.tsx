@@ -1,8 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
-import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,28 +13,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { api, queryKeys } from '@/lib/api-client';
-import { KIND_LABEL } from '@/lib/watchlist-ui';
+import { useCreateWatchlist } from '@/hooks/use-watchlist';
 import { WATCHLIST_KINDS } from '@/lib/types';
 import type { WatchlistKind } from '@/lib/types';
+import { KIND_LABEL } from '@/lib/watchlist-ui';
 import type { CreateWatchlistInput } from '@alice/shared';
 
 export function NewWatchlistPage() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const [kind, setKind] = useState<WatchlistKind>('movie');
 
-  const create = useMutation({
-    mutationFn: (input: CreateWatchlistInput) => api.watchlist.create(input),
-    onSuccess: async (created) => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.watchlist.all });
-      toast.success(`Anotado en la watchlist (#${created.id})`);
-      navigate({ to: '/watchlist' });
-    },
-    onError: (err) => {
-      toast.error(err instanceof Error ? err.message : 'Error al guardar');
-    },
-  });
+  const create = useCreateWatchlist();
 
   function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -50,7 +37,9 @@ export function NewWatchlistPage() {
       ...(url ? { url } : {}),
       ...(notes ? { notes } : {}),
     };
-    create.mutate(input);
+    create.mutate(input, {
+      onSuccess: () => navigate({ to: '/watchlist' }),
+    });
   }
 
   return (

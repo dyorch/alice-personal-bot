@@ -1,11 +1,5 @@
-'use client';
-
-import { useState, useTransition } from 'react';
+import { useState } from 'react';
 import { Check, ExternalLink, RotateCcw, Search } from 'lucide-react';
-import { toast } from 'sonner';
-import { useQueryClient } from '@tanstack/react-query';
-
-import { api, queryKeys } from '@/lib/api-client';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -18,10 +12,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { cn } from '@/lib/utils';
+import { useToggleWatched } from '@/hooks/use-watchlist';
 import { formatDate } from '@/lib/format';
-import { KIND_ACCENT, KIND_ICON, KIND_LABEL } from '@/lib/watchlist-ui';
 import type { WatchlistItem, WatchlistKind } from '@/lib/types';
+import { cn } from '@/lib/utils';
+import { KIND_ACCENT, KIND_ICON, KIND_LABEL } from '@/lib/watchlist-ui';
 
 const KINDS: WatchlistKind[] = ['movie', 'series', 'tiktok', 'video', 'other'];
 
@@ -96,41 +91,21 @@ function ItemCard({
 }
 
 export function WatchlistView({ items }: { items: WatchlistItem[] }) {
-  const [list, setList] = useState(items);
   const [kind, setKind] = useState('all');
   const [search, setSearch] = useState('');
-  const [, startTransition] = useTransition();
-  const queryClient = useQueryClient();
+
+  const toggleWatched = useToggleWatched();
 
   function toggle(item: WatchlistItem) {
-    const next = !item.watched;
-    setList((prev) =>
-      prev.map((x) =>
-        x.id === item.id
-          ? { ...x, watched: next, watchedAt: next ? new Date().toISOString() : null }
-          : x,
-      ),
-    );
-    startTransition(async () => {
-      try {
-        await api.watchlist.update(item.id, { watched: next });
-        await queryClient.invalidateQueries({ queryKey: queryKeys.watchlist.all });
-        toast.success(next ? 'Marcado como visto' : 'Movido a pendientes');
-      } catch (err) {
-        setList((prev) =>
-          prev.map((x) => (x.id === item.id ? item : x)),
-        );
-        toast.error(err instanceof Error ? err.message : 'No se pudo actualizar');
-      }
-    });
+    toggleWatched.mutate({ item, next: !item.watched });
   }
 
   const matches = (i: WatchlistItem) =>
     (kind === 'all' || i.kind === kind) &&
     (!search || (i.title ?? '').toLowerCase().includes(search.toLowerCase()));
 
-  const pending = list.filter((i) => !i.watched && matches(i));
-  const watched = list.filter((i) => i.watched && matches(i));
+  const pending = items.filter((i) => !i.watched && matches(i));
+  const watched = items.filter((i) => i.watched && matches(i));
 
   const grid = (data: WatchlistItem[], empty: string) =>
     data.length === 0 ? (

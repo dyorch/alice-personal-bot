@@ -1,17 +1,13 @@
 import { Link } from '@tanstack/react-router';
-import { useQuery } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { WatchlistView } from '@/components/watchlist-view';
-import { api, queryKeys } from '@/lib/api-client';
+import { useWatchlistList } from '@/hooks/use-watchlist';
 
 export function WatchlistPage() {
-  const itemsQuery = useQuery({
-    queryKey: queryKeys.watchlist.list({ status: 'all', limit: 500 }),
-    queryFn: () => api.watchlist.list({ status: 'all', limit: 500 }),
-  });
+  const itemsQuery = useWatchlistList({ status: 'all', limit: 500 });
 
   return (
     <>

@@ -1,5 +1,4 @@
 import { Link } from '@tanstack/react-router';
-import { useQuery } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -8,42 +7,28 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ExpensesTable } from '@/components/expenses-table';
 import { CategoryPieChart } from '@/components/charts/category-pie-chart';
 import { MonthlyBarChart } from '@/components/charts/monthly-bar-chart';
-import { formatMoney } from '@/lib/format';
-import { api, queryKeys } from '@/lib/api-client';
+import { useExpensesList, useExpensesSummary } from '@/hooks/use-expenses';
 import {
   categoryTotalsFromSummary,
   dailyTotalsFromList,
 } from '@/lib/derived';
+import { formatMoney } from '@/lib/format';
 
 export function ExpensesPage() {
-  const summaryQuery = useQuery({
-    queryKey: queryKeys.expenses.summary('month'),
-    queryFn: () => api.expenses.summary('month'),
-  });
-  const expensesQuery = useQuery({
-    queryKey: queryKeys.expenses.list({ limit: 500 }),
-    queryFn: () => api.expenses.list({ limit: 500 }),
-  });
-
+  const summaryQuery = useExpensesSummary('month');
+  const expensesQuery = useExpensesList({ limit: 500 });
   const summary = summaryQuery.data;
   const expenses = expensesQuery.data;
 
-  const monthListQuery = useQuery({
-    queryKey: queryKeys.expenses.list({
+  const monthListQuery = useExpensesList(
+    {
       from: summary?.from ?? '',
       to: summary?.to ?? '',
       currency: 'PEN',
       limit: 500,
-    }),
-    queryFn: () =>
-      api.expenses.list({
-        from: summary!.from,
-        to: summary!.to,
-        currency: 'PEN',
-        limit: 500,
-      }),
-    enabled: summary !== undefined,
-  });
+    },
+    { enabled: summary !== undefined },
+  );
 
   if (!summary || !expenses || !monthListQuery.data) {
     return <ExpensesSkeleton />;

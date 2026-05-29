@@ -1,81 +1,53 @@
 import { Link } from '@tanstack/react-router';
-import { useQuery } from '@tanstack/react-query';
 import { ArrowDownRight, ArrowUpRight, ShieldAlert } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MonthlyBarChart } from '@/components/charts/monthly-bar-chart';
-import { formatMoney, formatTime } from '@/lib/format';
-import { KIND_ICON, KIND_LABEL } from '@/lib/watchlist-ui';
-import { api, queryKeys } from '@/lib/api-client';
+import { useExpensesList, useExpensesSummary } from '@/hooks/use-expenses';
+import { useMessagesStats } from '@/hooks/use-messages';
+import { useRemindersList } from '@/hooks/use-reminders';
+import { useWatchlistCounts, useWatchlistList } from '@/hooks/use-watchlist';
+import { previousMonthKey } from '@/lib/date-utils';
 import {
   dailyTotalsFromList,
   deriveMonthSummary,
-  previousMonthKey,
   topCategoriesFromSummary,
   upcomingReminders,
 } from '@/lib/derived';
+import { formatMoney, formatTime } from '@/lib/format';
 import type { WatchlistKind } from '@/lib/types';
+import { KIND_ICON, KIND_LABEL } from '@/lib/watchlist-ui';
 
 export function HomePage() {
-  const summaryQuery = useQuery({
-    queryKey: queryKeys.expenses.summary('month'),
-    queryFn: () => api.expenses.summary('month'),
-  });
+  const summaryQuery = useExpensesSummary('month');
   const summary = summaryQuery.data;
 
   const prevMonthKey = summary ? previousMonthKey(summary.from.slice(0, 7)) : null;
-  const prevListQuery = useQuery({
-    queryKey: queryKeys.expenses.list({
+  const prevListQuery = useExpensesList(
+    {
       from: prevMonthKey ? `${prevMonthKey}-01` : '',
       to: prevMonthKey ? `${prevMonthKey}-31` : '',
       limit: 500,
-    }),
-    queryFn: () =>
-      api.expenses.list({
-        from: `${prevMonthKey}-01`,
-        to: `${prevMonthKey}-31`,
-        limit: 500,
-      }),
-    enabled: prevMonthKey !== null,
-  });
+    },
+    { enabled: prevMonthKey !== null },
+  );
 
-  const currentListQuery = useQuery({
-    queryKey: queryKeys.expenses.list({
+  const currentListQuery = useExpensesList(
+    {
       from: summary?.from ?? '',
       to: summary?.to ?? '',
       currency: 'PEN',
       limit: 500,
-    }),
-    queryFn: () =>
-      api.expenses.list({
-        from: summary!.from,
-        to: summary!.to,
-        currency: 'PEN',
-        limit: 500,
-      }),
-    enabled: summary !== undefined,
-  });
+    },
+    { enabled: summary !== undefined },
+  );
 
-  const pendingRemindersQuery = useQuery({
-    queryKey: queryKeys.reminders.list({ status: 'pending', limit: 500 }),
-    queryFn: () => api.reminders.list({ status: 'pending', limit: 500 }),
-  });
-
-  const watchlistCountsQuery = useQuery({
-    queryKey: queryKeys.watchlist.counts(),
-    queryFn: () => api.watchlist.counts(),
-  });
-  const watchlistPendingQuery = useQuery({
-    queryKey: queryKeys.watchlist.list({ status: 'pending', limit: 500 }),
-    queryFn: () => api.watchlist.list({ status: 'pending', limit: 500 }),
-  });
-
-  const statsQuery = useQuery({
-    queryKey: queryKeys.messages.stats(),
-    queryFn: () => api.messages.stats(),
-  });
+  const pendingRemindersQuery = useRemindersList({ status: 'pending', limit: 500 });
+  const watchlistCountsQuery = useWatchlistCounts();
+  const watchlistPendingQuery = useWatchlistList({ status: 'pending', limit: 500 });
+  const statsQuery = useMessagesStats();
 
   if (!summary || !prevListQuery.data || !currentListQuery.data) {
     return <HomeSkeleton />;

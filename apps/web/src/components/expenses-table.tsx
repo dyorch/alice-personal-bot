@@ -1,13 +1,8 @@
-'use client';
-
-import { useMemo, useState, useTransition } from 'react';
+import { useMemo, useState } from 'react';
 import { CalendarIcon, Download, Search, Trash2 } from 'lucide-react';
 import { es } from 'react-day-picker/locale';
 import type { DateRange } from 'react-day-picker';
 import { toast } from 'sonner';
-import { useQueryClient } from '@tanstack/react-query';
-
-import { api, queryKeys } from '@/lib/api-client';
 
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -38,76 +33,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { cn } from '@/lib/utils';
+import { useDeleteExpense } from '@/hooks/use-expenses';
+import { toCsv } from '@/lib/csv';
+import {
+  DATE_PRESETS,
+  type DatePreset,
+  limaDate,
+  presetRange,
+  shortDate,
+} from '@/lib/date-utils';
 import { formatDate, formatMoney } from '@/lib/format';
 import type { Expense } from '@/lib/types';
-
-type DatePreset = 'all' | 'today' | 'week' | 'month' | 'prevMonth' | 'custom';
-
-const PRESETS: { id: DatePreset; label: string }[] = [
-  { id: 'all', label: 'Todas las fechas' },
-  { id: 'today', label: 'Hoy' },
-  { id: 'week', label: 'Esta semana' },
-  { id: 'month', label: 'Este mes' },
-  { id: 'prevMonth', label: 'Mes anterior' },
-];
-
-function limaDate(iso: string): Date {
-  const [y, m, d] = new Date(iso)
-    .toLocaleDateString('en-CA', { timeZone: 'America/Lima' })
-    .split('-')
-    .map(Number);
-  return new Date(y!, m! - 1, d!);
-}
-
-function dateKey(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
-
-function presetRange(
-  preset: DatePreset,
-  now: Date,
-  custom: DateRange | undefined,
-): { from: string | null; to: string | null } {
-  switch (preset) {
-    case 'today': {
-      const k = dateKey(now);
-      return { from: k, to: k };
-    }
-    case 'week': {
-      const day = now.getDay() || 7;
-      const monday = new Date(now);
-      monday.setDate(now.getDate() - (day - 1));
-      const sunday = new Date(monday);
-      sunday.setDate(monday.getDate() + 6);
-      return { from: dateKey(monday), to: dateKey(sunday) };
-    }
-    case 'month': {
-      const first = new Date(now.getFullYear(), now.getMonth(), 1);
-      const last = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-      return { from: dateKey(first), to: dateKey(last) };
-    }
-    case 'prevMonth': {
-      const first = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-      const last = new Date(now.getFullYear(), now.getMonth(), 0);
-      return { from: dateKey(first), to: dateKey(last) };
-    }
-    case 'custom':
-      return {
-        from: custom?.from ? dateKey(custom.from) : null,
-        to: custom?.to ? dateKey(custom.to) : null,
-      };
-    default:
-      return { from: null, to: null };
-  }
-}
-
-function shortDate(d: Date): string {
-  return d.toLocaleDateString('es-PE', { day: 'numeric', month: 'short' });
-}
+import { cn } from '@/lib/utils';
 
 export function ExpensesTable({
   expenses,
@@ -117,7 +54,6 @@ export function ExpensesTable({
   nowIso: string;
 }) {
   const now = useMemo(() => limaDate(nowIso), [nowIso]);
-  const [rows, setRows] = useState(expenses);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
   const [currency, setCurrency] = useState('all');
@@ -125,8 +61,8 @@ export function ExpensesTable({
   const [customRange, setCustomRange] = useState<DateRange | undefined>();
   const [dateOpen, setDateOpen] = useState(false);
   const [toDelete, setToDelete] = useState<Expense | null>(null);
-  const [, startTransition] = useTransition();
-  const queryClient = useQueryClient();
+
+  const deleteExpense = useDeleteExpense();
 
   const categories = useMemo(
     () => [...new Set(expenses.map((e) => e.category))].sort(),
@@ -135,7 +71,7 @@ export function ExpensesTable({
 
   const range = presetRange(datePreset, now, customRange);
 
-  const filtered = rows.filter((e) => {
+  const filtered = expenses.filter((e) => {
     if (category !== 'all' && e.category !== category) return false;
     if (currency !== 'all' && e.currency !== currency) return false;
     if (range.from && e.spentAt < range.from) return false;
@@ -145,7 +81,7 @@ export function ExpensesTable({
   });
 
   const dateLabel = (() => {
-    if (datePreset !== 'custom') return PRESETS.find((p) => p.id === datePreset)?.label ?? '';
+    if (datePreset !== 'custom') return DATE_PRESETS.find((p) => p.id === datePreset)?.label ?? '';
     if (customRange?.from && customRange?.to) {
       return `${shortDate(customRange.from)} – ${shortDate(customRange.to)}`;
     }
@@ -166,11 +102,11 @@ export function ExpensesTable({
   }
 
   function exportCsv() {
-    const header = 'id,fecha,categoria,descripcion,monto,moneda';
-    const lines = filtered.map(
-      (e) => `${e.id},${e.spentAt},${e.category},"${e.description}",${e.amount},${e.currency}`,
+    const csv = toCsv(
+      ['id', 'fecha', 'categoria', 'descripcion', 'monto', 'moneda'],
+      filtered.map((e) => [e.id, e.spentAt, e.category, e.description, e.amount, e.currency]),
     );
-    const blob = new Blob([[header, ...lines].join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -184,17 +120,7 @@ export function ExpensesTable({
     if (!toDelete) return;
     const item = toDelete;
     setToDelete(null);
-    setRows((prev) => prev.filter((e) => e.id !== item.id));
-    startTransition(async () => {
-      try {
-        await api.expenses.remove(item.id);
-        await queryClient.invalidateQueries({ queryKey: queryKeys.expenses.all });
-        toast.success(`Gasto #${item.id} borrado`);
-      } catch (err) {
-        setRows((prev) => [...prev, item].sort((a, b) => b.id - a.id));
-        toast.error(err instanceof Error ? err.message : 'No se pudo borrar');
-      }
-    });
+    deleteExpense.mutate(item.id);
   }
 
   return (
@@ -224,7 +150,7 @@ export function ExpensesTable({
           <PopoverContent align="start" className="w-auto p-0">
             <div className="flex">
               <div className="flex w-44 flex-col gap-1 border-r p-2">
-                {PRESETS.map((p) => (
+                {DATE_PRESETS.map((p) => (
                   <Button
                     key={p.id}
                     variant={datePreset === p.id ? 'secondary' : 'ghost'}
@@ -242,7 +168,7 @@ export function ExpensesTable({
                   mode="range"
                   selected={customRange}
                   onSelect={onSelectRange}
-                  defaultMonth={new Date(2026, 4, 1)}
+                  defaultMonth={now}
                 />
               </div>
             </div>
