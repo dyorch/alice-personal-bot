@@ -1,0 +1,29 @@
+name = "alice-web"
+main = "worker/index.ts"
+compatibility_date = "2026-05-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Antes del primer deploy setear el secret (debe coincidir con el del worker
+# `alice-bot`):
+#   pnpm --filter web exec wrangler secret put API_SHARED_TOKEN
+#
+# Deploy:
+#   pnpm --filter web run cf-deploy
+# (no usar `pnpm deploy` — está reservado por pnpm para deploy de packages
+# en monorepos. De ahí el prefijo `cf-`.)
+
+[vars]
+BOT_API_BASE = "https://bot.alice.dyorch.com"
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+# Ejecuta el worker primero para que pueda interceptar `/api/*` antes de
+# delegar el resto a los assets estáticos.
+run_worker_first = true
+
+# Custom domain — añadir después del primer deploy exitoso.
+# [[routes]]
+# pattern = "dashboard.alice.dyorch.com"
+# custom_domain = true

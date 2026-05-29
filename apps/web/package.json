@@ -12,7 +12,9 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "cf-deploy": "pnpm build && wrangler deploy",
+    "cf-typegen": "wrangler types"
   },
   "dependencies": {
     "@alice/shared": "workspace:*",
@@ -34,6 +36,7 @@
     "zod": "^3.23.0"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240924.0",
     "@eslint/js": "^10.0.1",
     "@tailwindcss/vite": "^4.1.0",
     "@tanstack/router-cli": "^1.92.0",
@@ -54,6 +57,7 @@
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
     "vite": "^8.0.12",
-    "vitest": "^2.1.0"
+    "vitest": "^2.1.0",
+    "wrangler": "^4.0.0"
   }
 }
