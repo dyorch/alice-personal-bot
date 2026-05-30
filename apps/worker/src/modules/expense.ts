@@ -6,6 +6,7 @@ import { formatMoney } from '../utils/format.js';
 type CreateIntent = Extract<Intent, { kind: 'expense_create' }>;
 type QueryIntent = Extract<Intent, { kind: 'expense_query' }>;
 type DeleteIntent = Extract<Intent, { kind: 'expense_delete' }>;
+type EditIntent = Extract<Intent, { kind: 'edit_expense' }>;
 
 const PERIOD_LABEL: Record<QueryIntent['period'], string> = {
   day: 'Hoy',
@@ -65,4 +66,21 @@ export async function handleExpenseDelete(
 ): Promise<string> {
   const ok = await repos.expenses.remove(intent.id);
   return ok ? COPY.expenseDeleted(intent.id) : COPY.expenseNotFound(intent.id);
+}
+
+export async function handleExpenseEdit(
+  intent: EditIntent,
+  repos: Repos,
+): Promise<string> {
+  const updated = await repos.expenses.update(intent.id, intent.updates);
+  if (!updated) return COPY.expenseNotFound(intent.id);
+  return [
+    '✏️ Gasto actualizado',
+    `💰 ${formatMoney(updated.amount, updated.currency)} · ${updated.category}`,
+    updated.description ? `📝 ${updated.description}` : null,
+    `📅 ${updated.spentAt}`,
+    `ID #${updated.id}`,
+  ]
+    .filter(Boolean)
+    .join('\n');
 }

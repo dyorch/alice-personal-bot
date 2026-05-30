@@ -2,9 +2,19 @@ import type { AiClassification, Currency, WatchlistKind } from '@alice/shared';
 
 import { classifyWithAi } from './ai/classify.js';
 import type { Env } from './env.js';
+import {
+  parseEditCommand,
+  type ExpenseUpdates,
+  type ReminderUpdates,
+  type WatchlistUpdates,
+} from './parsers/edit.js';
 import { parseExpenseCommand, parseExpensesQuery } from './parsers/expense.js';
 import { parseReminderCommand } from './parsers/reminder.js';
 import { isUrl, parseWatchCommand } from './parsers/watch.js';
+
+/** Saludos / agradecimientos cortos: el bot acusa recibo sin ir a la IA. */
+const ACK_RE =
+  /^(hola|holi|hey|buenas|buenos\s+dias|buenas\s+tardes|buenas\s+noches|gracias|grax|thx|thanks|ty|ok|okay|vale|bien|genial|perfecto|listo|👌|👍|🙏|❤️|🤝|adios|chao|chau|bye|si|sip|no|nope)\s*[!?.]*$/i;
 
 export type Intent =
   | {
@@ -25,8 +35,13 @@ export type Intent =
   | { kind: 'watch_list' }
   | { kind: 'watch_mark'; id: number }
   | { kind: 'watch_delete'; id: number }
+  | { kind: 'edit_expense'; id: number; updates: ExpenseUpdates }
+  | { kind: 'edit_reminder'; id: number; updates: ReminderUpdates }
+  | { kind: 'edit_watchlist'; id: number; updates: WatchlistUpdates }
+  | { kind: 'summary' }
   | { kind: 'help' }
   | { kind: 'web' }
+  | { kind: 'ack' }
   | { kind: 'unknown' };
 
 /**
@@ -39,8 +54,16 @@ export async function route(text: string, env: Env): Promise<Intent> {
   const t = text.trim();
   if (!t) return { kind: 'unknown' };
 
+  if (ACK_RE.test(t)) return { kind: 'ack' };
   if (/^\/(ayuda|help)\b/i.test(t)) return { kind: 'help' };
   if (/^\/web\b/i.test(t)) return { kind: 'web' };
+  if (/^\/resumen\b/i.test(t)) return { kind: 'summary' };
+
+  if (/^\/editar\b/i.test(t)) {
+    const e = parseEditCommand(t);
+    if (!e) return { kind: 'unknown' };
+    return e;
+  }
 
   if (/^\/gasto\b/i.test(t) && !/^\/gastos/i.test(t)) {
     const parsed = parseExpenseCommand(t);

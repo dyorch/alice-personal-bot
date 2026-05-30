@@ -9,16 +9,20 @@ import { sendAndLog } from '../whatsapp/send.js';
 import {
   handleExpenseCreate,
   handleExpenseDelete,
+  handleExpenseEdit,
   handleExpenseQuery,
 } from './expense.js';
 import {
   handleReminderCreate,
   handleReminderDelete,
+  handleReminderEdit,
   handleReminderList,
 } from './reminder.js';
+import { handleSummary } from './summary.js';
 import {
   handleWatchCreate,
   handleWatchDelete,
+  handleWatchEdit,
   handleWatchList,
   handleWatchMark,
 } from './watchlist.js';
@@ -76,16 +80,29 @@ async function executeIntent(intent: Intent, env: Env, repos: Repos): Promise<st
       return handleWatchMark(intent, repos);
     case 'watch_delete':
       return handleWatchDelete(intent, repos);
+    case 'edit_expense':
+      return handleExpenseEdit(intent, repos);
+    case 'edit_reminder':
+      return handleReminderEdit(intent, repos, env.USER_TZ);
+    case 'edit_watchlist':
+      return handleWatchEdit(intent, repos);
+    case 'summary':
+      return handleSummary(repos, env.USER_TZ);
     case 'help':
       return COPY.help;
     case 'web':
       return COPY.web;
+    case 'ack':
+      return COPY.ack;
     case 'unknown':
       return COPY.unknown;
   }
 }
 
 function intentToCategory(kind: Intent['kind']): MessageIntent | null {
+  if (kind === 'edit_expense') return 'expense';
+  if (kind === 'edit_reminder') return 'reminder';
+  if (kind === 'edit_watchlist') return 'watch';
   if (kind.startsWith('expense')) return 'expense';
   if (kind.startsWith('reminder')) return 'reminder';
   if (kind.startsWith('watch')) return 'watch';

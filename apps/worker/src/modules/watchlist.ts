@@ -5,6 +5,7 @@ import type { Intent } from '../router.js';
 type CreateIntent = Extract<Intent, { kind: 'watch_create' }>;
 type MarkIntent = Extract<Intent, { kind: 'watch_mark' }>;
 type DeleteIntent = Extract<Intent, { kind: 'watch_delete' }>;
+type EditIntent = Extract<Intent, { kind: 'edit_watchlist' }>;
 
 export async function handleWatchCreate(
   intent: CreateIntent,
@@ -47,4 +48,15 @@ export async function handleWatchMark(intent: MarkIntent, repos: Repos): Promise
 export async function handleWatchDelete(intent: DeleteIntent, repos: Repos): Promise<string> {
   const ok = await repos.watchlist.remove(intent.id);
   return ok ? COPY.watchDeleted(intent.id) : COPY.watchNotFound(intent.id);
+}
+
+export async function handleWatchEdit(intent: EditIntent, repos: Repos): Promise<string> {
+  const updated = await repos.watchlist.update(intent.id, intent.updates);
+  if (!updated) return COPY.watchNotFound(intent.id);
+  const label = updated.title ?? updated.url ?? '(sin titulo)';
+  return [
+    '✏️ Entrada actualizada',
+    `${KIND_LABEL[updated.kind] ?? updated.kind} · ${label}`,
+    `ID #${updated.id}`,
+  ].join('\n');
 }

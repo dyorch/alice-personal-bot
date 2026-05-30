@@ -6,6 +6,7 @@ import { localDateTimeToUtc } from '../utils/time.js';
 
 type CreateIntent = Extract<Intent, { kind: 'reminder_create' }>;
 type DeleteIntent = Extract<Intent, { kind: 'reminder_delete' }>;
+type EditIntent = Extract<Intent, { kind: 'edit_reminder' }>;
 
 export async function handleReminderCreate(
   intent: CreateIntent,
@@ -48,4 +49,32 @@ export async function handleReminderDelete(
 ): Promise<string> {
   const ok = await repos.reminders.remove(intent.id);
   return ok ? COPY.reminderDeleted(intent.id) : COPY.reminderNotFound(intent.id);
+}
+
+export async function handleReminderEdit(
+  intent: EditIntent,
+  repos: Repos,
+  tz: string,
+): Promise<string> {
+  const patch: { text?: string; fireAt?: string } = {};
+  if (intent.updates.text !== undefined) patch.text = intent.updates.text;
+  if (intent.updates.fireAtLocal !== undefined) {
+    const fireAtUtc = localDateTimeToUtc(intent.updates.fireAtLocal, tz);
+    if (fireAtUtc.getTime() <= Date.now()) {
+      return [
+        '⚠️ Esa fecha ya pasó.',
+        `Me diste ${formatDateTimeShort(fireAtUtc.toISOString(), tz)} (${tz}).`,
+        'Usa una fecha futura.',
+      ].join('\n');
+    }
+    patch.fireAt = fireAtUtc.toISOString();
+  }
+  const updated = await repos.reminders.update(intent.id, patch);
+  if (!updated) return COPY.reminderNotFound(intent.id);
+  return [
+    '✏️ Recordatorio actualizado',
+    `📝 ${updated.text}`,
+    `⏰ ${formatDateTimeShort(updated.fireAt, tz)} (${tz})`,
+    `ID #${updated.id}`,
+  ].join('\n');
 }
