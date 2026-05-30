@@ -26,6 +26,7 @@ export type Intent =
   | { kind: 'watch_mark'; id: number }
   | { kind: 'watch_delete'; id: number }
   | { kind: 'help' }
+  | { kind: 'web' }
   | { kind: 'unknown' };
 
 /**
@@ -39,6 +40,7 @@ export async function route(text: string, env: Env): Promise<Intent> {
   if (!t) return { kind: 'unknown' };
 
   if (/^\/(ayuda|help)\b/i.test(t)) return { kind: 'help' };
+  if (/^\/web\b/i.test(t)) return { kind: 'web' };
 
   if (/^\/gasto\b/i.test(t) && !/^\/gastos/i.test(t)) {
     const parsed = parseExpenseCommand(t);

@@ -78,6 +78,8 @@ async function executeIntent(intent: Intent, env: Env, repos: Repos): Promise<st
       return handleWatchDelete(intent, repos);
     case 'help':
       return COPY.help;
+    case 'web':
+      return COPY.web;
     case 'unknown':
       return COPY.unknown;
   }
