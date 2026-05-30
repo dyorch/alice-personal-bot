@@ -58,6 +58,29 @@ export function todayInTz(tz: string): string {
   return localDate(new Date(), tz);
 }
 
+/**
+ * Hora actual del usuario en formato `YYYY-MM-DD HH:mm` (sin offset).
+ * Útil para pasarle al modelo de IA un "ahora" que ya está en su TZ y
+ * no tenga que convertir nada.
+ */
+export function nowInTz(tz: string, instant: Date = new Date()): string {
+  const fmt = new Intl.DateTimeFormat('en-CA', {
+    timeZone: tz,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+  const parts: Record<string, string> = {};
+  for (const part of fmt.formatToParts(instant)) {
+    if (part.type !== 'literal') parts[part.type] = part.value;
+  }
+  const hour = parts.hour === '24' ? '00' : parts.hour!;
+  return `${parts.year}-${parts.month}-${parts.day} ${hour}:${parts.minute}`;
+}
+
 /** Primer milisegundo del dia local en `tz`, expresado como Date UTC. */
 export function startOfDayInTz(localYmd: string, tz: string): Date {
   return localDateTimeToUtc(`${localYmd} 00:00`, tz);
