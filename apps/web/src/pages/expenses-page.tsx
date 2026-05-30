@@ -1,9 +1,10 @@
-import { Link } from '@tanstack/react-router';
+import { useState } from 'react';
 import { Plus } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { NewExpenseDialog } from '@/components/dialogs/new-expense-dialog';
 import { ExpensesTable } from '@/components/expenses-table';
 import { CategoryPieChart } from '@/components/charts/category-pie-chart';
 import { MonthlyBarChart } from '@/components/charts/monthly-bar-chart';
@@ -15,6 +16,7 @@ import {
 import { formatMoney } from '@/lib/format';
 
 export function ExpensesPage() {
+  const [newOpen, setNewOpen] = useState(false);
   const summaryQuery = useExpensesSummary('month');
   const expensesQuery = useExpensesList({ limit: 500 });
   const summary = summaryQuery.data;
@@ -44,7 +46,7 @@ export function ExpensesPage() {
     <>
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm text-muted-foreground">Tus gastos y resúmenes.</p>
-        <Button render={<Link to="/expenses/new" />}>
+        <Button onClick={() => setNewOpen(true)}>
           <Plus /> Nuevo
         </Button>
       </div>
@@ -101,6 +103,8 @@ export function ExpensesPage() {
           <ExpensesTable expenses={expenses} nowIso={new Date().toISOString()} />
         </CardContent>
       </Card>
+
+      <NewExpenseDialog open={newOpen} onOpenChange={setNewOpen} />
     </>
   );
 }

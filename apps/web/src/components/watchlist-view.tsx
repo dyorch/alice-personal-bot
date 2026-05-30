@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { Check, ExternalLink, RotateCcw, Search } from 'lucide-react';
+import { Check, ExternalLink, Pencil, RotateCcw, Search } from 'lucide-react';
+
+import { EditWatchlistDialog } from '@/components/dialogs/edit-watchlist-dialog';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -23,9 +25,11 @@ const KINDS: WatchlistKind[] = ['movie', 'series', 'tiktok', 'video', 'other'];
 function ItemCard({
   item,
   onToggle,
+  onEdit,
 }: {
   item: WatchlistItem;
   onToggle: (item: WatchlistItem) => void;
+  onEdit: (item: WatchlistItem) => void;
 }) {
   const Icon = KIND_ICON[item.kind];
   return (
@@ -51,6 +55,15 @@ function ItemCard({
       <div className="flex flex-1 flex-col gap-1.5 p-4">
         <div className="flex items-start justify-between gap-2">
           <p className="line-clamp-2 leading-snug font-medium">{item.title}</p>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Editar"
+            className="shrink-0 -mt-1 -mr-1 opacity-0 transition-opacity group-hover:opacity-100"
+            onClick={() => onEdit(item)}
+          >
+            <Pencil className="text-muted-foreground" />
+          </Button>
         </div>
         <p className="text-xs text-muted-foreground">Añadido el {formatDate(item.createdAt)}</p>
         {item.notes && (
@@ -93,6 +106,7 @@ function ItemCard({
 export function WatchlistView({ items }: { items: WatchlistItem[] }) {
   const [kind, setKind] = useState('all');
   const [search, setSearch] = useState('');
+  const [toEdit, setToEdit] = useState<WatchlistItem | null>(null);
 
   const toggleWatched = useToggleWatched();
 
@@ -115,7 +129,7 @@ export function WatchlistView({ items }: { items: WatchlistItem[] }) {
     ) : (
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
         {data.map((i) => (
-          <ItemCard key={i.id} item={i} onToggle={toggle} />
+          <ItemCard key={i.id} item={i} onToggle={toggle} onEdit={setToEdit} />
         ))}
       </div>
     );
@@ -157,6 +171,11 @@ export function WatchlistView({ items }: { items: WatchlistItem[] }) {
 
       <TabsContent value="pending">{grid(pending, 'No hay pendientes con estos filtros.')}</TabsContent>
       <TabsContent value="watched">{grid(watched, 'Aún no marcas nada como visto.')}</TabsContent>
+
+      <EditWatchlistDialog
+        item={toEdit}
+        onOpenChange={(open) => !open && setToEdit(null)}
+      />
     </Tabs>
   );
 }

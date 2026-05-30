@@ -1,10 +1,14 @@
 import { useMemo, useState } from 'react';
-import { CalendarIcon, Download, Search, Trash2 } from 'lucide-react';
+import { CalendarIcon, Download, Pencil, Search, Trash2 } from 'lucide-react';
 import { es } from 'react-day-picker/locale';
 import type { DateRange } from 'react-day-picker';
 import { toast } from 'sonner';
 
+import { EditExpenseDialog } from '@/components/dialogs/edit-expense-dialog';
 import { Button } from '@/components/ui/button';
+import { useUndoableDelete } from '@/lib/use-undoable-delete';
+import { queryKeys } from '@/lib/query-keys';
+import { expensesService } from '@/services/expenses.service';
 import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -33,7 +37,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { useDeleteExpense } from '@/hooks/use-expenses';
 import { toCsv } from '@/lib/csv';
 import {
   DATE_PRESETS,
@@ -61,8 +64,9 @@ export function ExpensesTable({
   const [customRange, setCustomRange] = useState<DateRange | undefined>();
   const [dateOpen, setDateOpen] = useState(false);
   const [toDelete, setToDelete] = useState<Expense | null>(null);
+  const [toEdit, setToEdit] = useState<Expense | null>(null);
 
-  const deleteExpense = useDeleteExpense();
+  const undoableDelete = useUndoableDelete();
 
   const categories = useMemo(
     () => [...new Set(expenses.map((e) => e.category))].sort(),
@@ -120,7 +124,14 @@ export function ExpensesTable({
     if (!toDelete) return;
     const item = toDelete;
     setToDelete(null);
-    deleteExpense.mutate(item.id);
+    void undoableDelete<number, Expense>({
+      vars: item.id,
+      listKeyPrefix: ['expenses', 'list'],
+      invalidateKey: queryKeys.expenses.all,
+      applyOptimistic: (list, id) => list.filter((e) => e.id !== id),
+      mutationFn: (id) => expensesService.remove(id),
+      successMessage: `Gasto #${item.id} borrado`,
+    });
   }
 
   return (
@@ -217,7 +228,7 @@ export function ExpensesTable({
               <TableHead>Categoría</TableHead>
               <TableHead>Descripción</TableHead>
               <TableHead className="text-right">Monto</TableHead>
-              <TableHead className="w-12" />
+              <TableHead className="w-20" />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -236,14 +247,24 @@ export function ExpensesTable({
                   {formatMoney(e.amount, e.currency)}
                 </TableCell>
                 <TableCell>
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    aria-label="Borrar"
-                    onClick={() => setToDelete(e)}
-                  >
-                    <Trash2 className="text-muted-foreground" />
-                  </Button>
+                  <div className="flex justify-end gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label="Editar"
+                      onClick={() => setToEdit(e)}
+                    >
+                      <Pencil className="text-muted-foreground" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label="Borrar"
+                      onClick={() => setToDelete(e)}
+                    >
+                      <Trash2 className="text-muted-foreground" />
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
@@ -257,6 +278,11 @@ export function ExpensesTable({
           </TableBody>
         </Table>
       </div>
+
+      <EditExpenseDialog
+        expense={toEdit}
+        onOpenChange={(open) => !open && setToEdit(null)}
+      />
 
       <Dialog open={toDelete !== null} onOpenChange={(open) => !open && setToDelete(null)}>
         <DialogContent>

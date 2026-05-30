@@ -1,24 +1,29 @@
 import { useMemo, useState } from 'react';
-import { Bell, Check, X } from 'lucide-react';
+import { Bell, Check, Pencil, X } from 'lucide-react';
 import { es } from 'react-day-picker/locale';
+
+import { EditReminderDialog } from '@/components/dialogs/edit-reminder-dialog';
+import { useUndoableDelete } from '@/lib/use-undoable-delete';
+import { queryKeys } from '@/lib/query-keys';
+import { remindersService } from '@/services/reminders.service';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useCancelReminder } from '@/hooks/use-reminders';
 import { dateKey, limaDate } from '@/lib/date-utils';
 import { formatDate, formatRelative, formatTime } from '@/lib/format';
 import type { Reminder } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
 export function RemindersView({ reminders, nowIso }: { reminders: Reminder[]; nowIso: string }) {
-  const cancelReminder = useCancelReminder();
+  const undoableDelete = useUndoableDelete();
   const now = new Date(nowIso);
   const in24h = now.getTime() + 86_400_000;
   const today = limaDate(nowIso);
   const [selectedDate, setSelectedDate] = useState<Date>(today);
+  const [toEdit, setToEdit] = useState<Reminder | null>(null);
 
   const pending = reminders
     .filter((r) => !r.sent)
@@ -101,15 +106,33 @@ export function RemindersView({ reminders, nowIso }: { reminders: Reminder[]; no
                       </Badge>
                     )}
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    aria-label="Cancelar"
-                    className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
-                    onClick={() => cancelReminder.mutate(r.id)}
-                  >
-                    <X className="text-muted-foreground" />
-                  </Button>
+                  <div className="flex shrink-0 gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label="Editar"
+                      onClick={() => setToEdit(r)}
+                    >
+                      <Pencil className="text-muted-foreground" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label="Cancelar"
+                      onClick={() => {
+                        void undoableDelete<number, Reminder>({
+                          vars: r.id,
+                          listKeyPrefix: ['reminders', 'list'],
+                          invalidateKey: queryKeys.reminders.all,
+                          applyOptimistic: (list, id) => list.filter((x) => x.id !== id),
+                          mutationFn: (id) => remindersService.remove(id),
+                          successMessage: `Recordatorio #${r.id} cancelado`,
+                        });
+                      }}
+                    >
+                      <X className="text-muted-foreground" />
+                    </Button>
+                  </div>
                 </div>
               );
             })}
@@ -226,6 +249,11 @@ export function RemindersView({ reminders, nowIso }: { reminders: Reminder[]; no
           </Card>
         </div>
       </TabsContent>
+
+      <EditReminderDialog
+        reminder={toEdit}
+        onOpenChange={(open) => !open && setToEdit(null)}
+      />
     </Tabs>
   );
 }
