@@ -136,9 +136,19 @@ export function RemindersView({ reminders, nowIso }: { reminders: Reminder[]; no
                 </div>
               );
             })}
-            {pending.length === 0 && (
+            {pending.length === 0 && reminders.length === 0 && (
+              <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed py-12 text-center text-sm text-muted-foreground">
+                <p>Aún no tienes recordatorios.</p>
+                <p>
+                  Crea uno con <strong className="text-foreground">+ Nuevo</strong> o
+                  mándale <code className="rounded bg-muted px-1.5 py-0.5 text-xs">/recordar 2026-06-01 09:00 pagar luz</code>{' '}
+                  al bot.
+                </p>
+              </div>
+            )}
+            {pending.length === 0 && reminders.length > 0 && (
               <div className="rounded-xl border border-dashed py-12 text-center text-sm text-muted-foreground">
-                No hay recordatorios pendientes.
+                No hay recordatorios pendientes. Mira la lista de enviados abajo.
               </div>
             )}
           </div>

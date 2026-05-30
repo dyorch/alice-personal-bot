@@ -123,8 +123,18 @@ export function WatchlistView({ items }: { items: WatchlistItem[] }) {
 
   const grid = (data: WatchlistItem[], empty: string) =>
     data.length === 0 ? (
-      <div className="rounded-xl border border-dashed py-16 text-center text-sm text-muted-foreground">
-        {empty}
+      <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed py-16 text-center text-sm text-muted-foreground">
+        {items.length === 0 ? (
+          <>
+            <p>Aún no tienes nada en la watchlist.</p>
+            <p>
+              Agrega algo con <strong className="text-foreground">+ Nuevo</strong> o pégale un link
+              de YouTube/TikTok al bot.
+            </p>
+          </>
+        ) : (
+          <p>{empty}</p>
+        )}
       </div>
     ) : (
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">

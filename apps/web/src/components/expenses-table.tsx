@@ -270,8 +270,19 @@ export function ExpensesTable({
             ))}
             {filtered.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                  Sin gastos para estos filtros.
+                <TableCell colSpan={5} className="h-32 text-center">
+                  {expenses.length === 0 ? (
+                    <div className="flex flex-col items-center gap-1.5 py-4 text-sm text-muted-foreground">
+                      <p>Aún no tienes gastos registrados.</p>
+                      <p>
+                        Crea el primero con el botón <strong className="text-foreground">+ Nuevo</strong> o
+                        mándale <code className="rounded bg-muted px-1.5 py-0.5 text-xs">/gasto 50 comida almuerzo</code>{' '}
+                        al bot.
+                      </p>
+                    </div>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">Sin gastos para estos filtros.</span>
+                  )}
                 </TableCell>
               </TableRow>
             )}
