@@ -13,14 +13,23 @@ export async function runCron(env: Env, ctx: ExecutionContext): Promise<void> {
   const now = new Date();
   const nowIso = now.toISOString();
 
-  // 1) Recordatorios vencidos
+  // 1) Recordatorios vencidos.
+  //
+  // Orden: claim (markSent atómico con `sent = 0`) ANTES de enviar. Si dos
+  // crons se solapan, solo uno obtiene `true` y envía. Si el envío falla
+  // después del claim, perdemos ese recordatorio (queda en `sent=1`) pero
+  // evitamos duplicados — preferimos at-most-once a at-least-once para
+  // notificaciones por WhatsApp.
   const due = await repos.reminders.duePending(nowIso, 50);
   for (const r of due) {
     ctx.waitUntil(
       (async () => {
+        const claimed = await repos.reminders.markSent(r.id);
+        if (!claimed) return;
         const res = await sendAndLog(env, repos, env.ALLOWED_PHONE, `🔔 ${r.text}`);
-        if (res.ok) await repos.reminders.markSent(r.id);
-        else console.error(`[cron] no se pudo enviar recordatorio #${r.id}: ${res.error}`);
+        if (!res.ok) {
+          console.error(`[cron] envío fallido tras claim #${r.id}: ${res.error}`);
+        }
       })(),
     );
   }

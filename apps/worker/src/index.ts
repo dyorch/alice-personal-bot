@@ -8,6 +8,7 @@ import watchlistApi from './api/watchlist.js';
 import { runCron } from './cron/index.js';
 import { createRepos } from './db/index.js';
 import type { Env } from './env.js';
+import { validateEnv } from './env.js';
 import { AppError } from './errors.js';
 import { processAllowedMessage } from './modules/handler.js';
 import { fail, ok } from './utils/response.js';
@@ -47,6 +48,12 @@ app.get('/webhook', (c) => {
 });
 
 app.post('/webhook', async (c) => {
+  try {
+    validateEnv(c.env);
+  } catch (err) {
+    console.error('[env] configuración inválida en /webhook', err);
+    return c.json(fail('config_error', 'Worker mal configurado'), 500);
+  }
   const rawBody = await c.req.raw.clone().text();
   const sig = c.req.header('x-hub-signature-256') ?? null;
   const repos = createRepos(c.env.DB);
@@ -62,6 +69,12 @@ app.route('/api/message-log', messageLogApi);
 export default {
   fetch: app.fetch,
   async scheduled(_event: ScheduledController, env: Env, ctx: ExecutionContext) {
+    try {
+      validateEnv(env);
+    } catch (err) {
+      console.error('[env] configuración inválida en scheduled cron', err);
+      return;
+    }
     await runCron(env, ctx);
   },
 } satisfies ExportedHandler<Env>;

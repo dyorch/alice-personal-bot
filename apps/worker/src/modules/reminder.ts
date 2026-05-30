@@ -13,6 +13,13 @@ export async function handleReminderCreate(
   tz: string,
 ): Promise<string> {
   const fireAtUtc = localDateTimeToUtc(intent.fireAtLocal, tz);
+  if (fireAtUtc.getTime() <= Date.now()) {
+    return [
+      '⚠️ Esa fecha ya pasó.',
+      `Me diste ${formatDateTimeShort(fireAtUtc.toISOString(), tz)} (${tz}).`,
+      'Usa una fecha futura.',
+    ].join('\n');
+  }
   const r = await repos.reminders.create({
     text: intent.text,
     fireAt: fireAtUtc.toISOString(),

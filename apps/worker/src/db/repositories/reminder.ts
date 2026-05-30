@@ -89,12 +89,20 @@ export function reminderRepo(db: Db) {
       return rows.map(mapReminder);
     },
 
-    async markSent(id: number): Promise<void> {
-      await db
+    /**
+     * Marca el recordatorio como enviado de forma atómica. Solo actualiza si
+     * `sent = 0`; devuelve `true` si la fila fue actualizada (el caller tiene
+     * la responsabilidad exclusiva de enviar). Esto previene duplicados si
+     * dos crons se solapan.
+     */
+    async markSent(id: number): Promise<boolean> {
+      const result = await db
         .updateTable('reminders')
         .set({ sent: 1, updatedAt: nowIso() })
         .where('id', '=', id)
-        .execute();
+        .where('sent', '=', 0)
+        .executeTakeFirst();
+      return Number(result?.numUpdatedRows ?? 0n) > 0;
     },
   };
 }

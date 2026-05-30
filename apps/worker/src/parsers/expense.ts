@@ -40,9 +40,16 @@ export function parseExpenseCommand(text: string): ParsedExpense | null {
   return null;
 }
 
-function build(amt: string, currency: Currency, category: string, desc?: string): ParsedExpense {
+function build(
+  amt: string,
+  currency: Currency,
+  category: string,
+  desc?: string,
+): ParsedExpense | null {
+  const amount = Number(amt);
+  if (!Number.isFinite(amount) || amount <= 0) return null;
   return {
-    amount: Number(amt),
+    amount,
     currency,
     category: category.toLowerCase(),
     description: (desc ?? '').trim(),
